@@ -1,0 +1,65 @@
+import { fastify } from "fastify"
+// import { DatabaseMemory } from "./database-memory.js";
+import { DatabasePostgres } from "./database-postgres.js"
+
+//Usando o Fastify para conecar o server
+const server = fastify();
+
+//Criando o Banco de Dados em memória
+
+//const database = new DatabaseMemory()
+const database = new DatabasePostgres()
+
+// POST http://localhost:8080/videos
+server.post('/videos', async (request, reply) => {
+  //Desestruturação
+  const { title, description, duration } = request.body
+
+  await database.create({
+    title,
+    description,
+    duration,
+  })
+
+  return reply.status(201).send()
+})
+
+// GET http://localhost:8080/videos
+server.get('/videos', async (request) => {
+  const search = request.query.search
+
+  const videos = await database.list(search)
+
+  return videos
+})
+
+// PUT http://localhost:8080/videos/3 -> 3 é o ID do vídeo
+// Aqui terá que ter um Route Parameter
+server.put('/videos/:id', async (request, reply) => {
+  const videoId = request.params.id
+  const { title, description, duration } = request.body
+
+  await database.update(videoId, {
+    title,
+    description,
+    duration,
+  })
+
+  return reply.status(204).send()
+})
+
+// DELETE http://localhost:8080/videos/3 -> 3 é o ID do vídeo
+// Aqui terá que ter um Route Parameter
+server.delete('/videos/:id', async (request, reply) => {
+  const videoId = request.params.id
+
+  await database.delete(videoId)
+
+  return reply.status(204).send()
+})
+
+
+
+server.listen({
+  port: process.env.PORT ?? 8080,
+})
